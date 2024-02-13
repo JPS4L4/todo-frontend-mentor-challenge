@@ -4,15 +4,17 @@ import ToDoComputed from "./components/ToDoComputed";
 import ToDoFilter from "./components/ToDoFilter";
 import ToDoList from "./components/ToDoList";
 import ToDoCreate from "./components/TodoCreate";
-
-/* const initialStateToDos = [
-    { id: 1, title: "Estudiar", completed: false },
-    { id: 2, title: "Hacer Ejercicio", completed: true },
-    { id: 3, title: "Mejorar constantemente", completed: true },
-    { id: 4, title: "Aprender JavaScript", completed: false },
-]; */
+import { DragDropContext } from "@hello-pangea/dnd";
 
 const initialStateToDos = JSON.parse(localStorage.getItem("todos")) || [];
+
+const reOrder = (list, startIndex, finalIndex) => {
+    const result = [...list];
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(finalIndex, 0, removed);
+
+    return result;
+};
 
 const App = () => {
     const [todos, setTodos] = useState(initialStateToDos);
@@ -68,6 +70,19 @@ const App = () => {
         setFilter(filter);
     };
 
+    const handleDragEnd = (result) => {
+        const{destination, source} = result;
+        if (!destination) return;
+        if (
+            source.index === destination.index &&
+            source.droppableId === destination.droppableId
+        )
+            return;
+        setTodos((prevTasks) =>
+            reOrder(prevTasks, source.index, destination.index)
+        );
+    };
+
     return (
         <div className="min-h-screen bg-gray-300 bg-[url('./assets/images/bg-mobile-light.jpg')] bg-contain bg-no-repeat  dark:bg-gray-900 dark:bg-[url('./assets/images/bg-mobile-dark.jpg')] transition-all duration-500 md:bg-[url('./assets/images/bg-desktop-light.jpg')] md:dark:bg-[url('./assets/images/bg-desktop-dark.jpg')]">
             <Header />
@@ -75,11 +90,13 @@ const App = () => {
             <main className="container mx-auto mt-8 px-4 md:max-w-xl">
                 <ToDoCreate createToDo={createToDo} />
 
-                <ToDoList
-                    todos={filteredToDos()}
-                    updateToDo={updateToDo}
-                    deleteToDo={deleteToDo}
-                />
+                <DragDropContext onDragEnd={handleDragEnd}>
+                    <ToDoList
+                        todos={filteredToDos()}
+                        updateToDo={updateToDo}
+                        deleteToDo={deleteToDo}
+                    />
+                </DragDropContext>
 
                 <ToDoComputed
                     countLeftToDo={countLeftToDo}
